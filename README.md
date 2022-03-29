@@ -1,5 +1,13 @@
 # Trident
 
+## Installation with Docker
+
+Build the Docker image
+
+```
+docker build -t trident-clone .
+```
+
 ## Installation on Ubuntu (or similar Linux Distros)
 
 The installation should be fairly easy on Ubuntu (or on similar Linux distro
@@ -131,7 +139,43 @@ also a (minimally modified) version of the SNAP library. This library must be
 compiled first, otherwise Trident won't be able to compile. The CMake process
 should automatically take care of this, but if things go wrong here you have a
 problem. To check SNAP has been correctly compiled, make sure that the file
-"snap/snap-core/libsnap.a" exists. 
+"snap/snap-core/libsnap.a" exists.
+
+## Usage
+
+These are the commands that can be passed to the _trident_ binary.
+
+For any of the commands, the option `-l` can be used to set logging level. For example, `-l debug` will set the debugging level to _debug_.
+
+#### Load
+
+To load Trident, use the _load_ command
+
+```
+./trident load -f <FOLDER WITH DATA> -i <DATA FOLDER>
+```
+
+The option `-f` must be followed by a folder containing RDF files.
+The option `-i` must be followed by a non-existing folder in which trident data will be stored.
+
+#### Query
+
+To query Trident, use the _query_ command
+
+```
+./trident query -i <DATA FOLDER> -q <QUERY FILE>
+```
+
+The `-i` option is the same as when using the `load` command.
+The option `-q` option must be followed by a query file.
+
+### Usage in Docker
+
+Run any of the above commands with
+
+```
+docker run trident-clone ./trident <COMMAND>
+```
 
 ## License
 
