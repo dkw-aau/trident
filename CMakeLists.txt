@@ -6,10 +6,11 @@
 #-DSPARQL=1 enable advanced sparql support
 #-DML=1 enable machine learning algorithms
 
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 3.12)
 
 set(CMAKE_CXX_COMPILER "g++")
 set(CMAKE_C_COMPILER "gcc")
+set(CMAKE_CXX_STANDARD 14)
 
 project (Trident)
 include(ExternalProject)
@@ -19,6 +20,15 @@ set(CMAKE_VS_PLATFORM_NAME, "x64")
 if(COMMAND cmake_policy)
     cmake_policy(SET CMP0003 NEW)
 endif(COMMAND cmake_policy)
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS "/O2 /arch:AVX2 /W1 /EHsc")
+elseif (CMAKE_CXX_COMPILER_ID STREQUAL "Intel")
+    set(CMAKE_CXX_FLAGS "-O3 -xHost")
+else()
+    # clang and gcc
+    set(CMAKE_CXX_FLAGS "-O3 -march=native")
+endif()
 
 IF (JAVA)
     find_package(Java REQUIRED)
@@ -152,7 +162,7 @@ ENDIF()
 # ENDIF()
 
 #Create the core library
-include_directories(include/ rdf3x/include rapidjson/include)
+include_directories(include/ rdf3x/include rapidjson/include alex/include)
 file(GLOB trident_SRC
     "src/trident/binarytables/*.cpp"
     "src/trident/files/*.cpp"
