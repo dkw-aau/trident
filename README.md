@@ -1,6 +1,6 @@
 # Trident
 
-This is a modified version of the Trident triple store. This modification has the node B+ tree substitutes with the <a href="https://github.com/microsoft/ALEX">ALEX</a> learned index.
+This is a modified version of the Trident triple store. This modification has the node B+ tree substituted with the <a href="https://github.com/microsoft/ALEX">ALEX</a> learned index.
 
 ## Installation with Docker
 
