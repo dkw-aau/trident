@@ -3,7 +3,6 @@ scripts
 .ycm*
 .DS_Store
 /build*
-/trident*
 .vs/
 *.exe
 *.dll
@@ -19,3 +18,5 @@ scripts
 *.iobj
 *.a
 *.o
+.idea/
+cmake-build-debug/
