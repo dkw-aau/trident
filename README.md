@@ -141,6 +141,27 @@ should automatically take care of this, but if things go wrong here you have a
 problem. To check SNAP has been correctly compiled, make sure that the file
 "snap/snap-core/libsnap.a" exists.
 
+## Tests
+
+Tests are located in the `tests` folder in which a single `Makefile` wraps execution of all tests.
+To run a test, simply type
+
+```
+make <TEST NAME>
+```
+
+For example, to run tests for the learned index, type
+
+```
+make testlearnedindex
+```
+
+To run the learned index test in Docker, type
+
+```
+docker run trident-clone cd ../tests && make testlearnedindex
+```
+
 ## Usage
 
 These are the commands that can be passed to the _trident_ binary.

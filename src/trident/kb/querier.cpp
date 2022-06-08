@@ -28,6 +28,7 @@
 #include <trident/iterators/compositetermitr.h>
 #include <trident/iterators/reorderitr.h>
 #include <trident/iterators/reordertermitr.h>
+#include <trident/learned_index/learnedindex.h>
 
 #include <kognac/factory.h>
 
@@ -68,7 +69,7 @@ ConstKeyCardItr::ConstKeyCardItr(Querier *q, uint64_t s, uint64_t r, uint64_t d,
 }
 
 
-Querier::Querier(Root* tree, DictMgmt *dict, TableStorage** files,
+Querier::Querier(LearnedIndex* learnedIndex, DictMgmt *dict, TableStorage** files,
         const int64_t inputSize, const int64_t nTerms, const int nindices,
         const int64_t *nTablesPerPartition,
         const int64_t *nFirstTablesPerPartition, KB *sampleKB,
@@ -78,7 +79,7 @@ Querier::Querier(Root* tree, DictMgmt *dict, TableStorage** files,
     nFirstTablesPerPartition(nFirstTablesPerPartition),
     // nindices(nindices),
     diffIndices(diffIndices), present(present), partial(partial) {
-        this->tree = tree;
+        this->learnedIndex = learnedIndex;
         this->dict = dict;
         this->files = files;
         lastKeyFound = false;
@@ -117,7 +118,7 @@ void Querier::initDiffIndex(DiffIndex *diff) {
 
 char Querier::getStrategy(const int idx, const int64_t v) {
     if (lastKeyQueried != v) {
-        lastKeyFound = tree->get(v, &currentValue);
+        lastKeyFound = this->learnedIndex->get(v, this->currentValue);
         lastKeyQueried = v;
     }
     return currentValue.getStrategy(idx);
@@ -281,7 +282,7 @@ uint64_t Querier::isAggregated(const int idx, const int64_t first, const int64_t
     const int64_t key = second;
     if (key >= 0) {
         if (lastKeyQueried != key) {
-            lastKeyFound = tree->get(key, &currentValue);
+            lastKeyFound = this->learnedIndex->get(key, this->currentValue);
             lastKeyQueried = key;
         }
         if (currentValue.exists(idx)) {
@@ -336,7 +337,7 @@ uint64_t Querier::isReverse(const int idx, const int64_t first, const int64_t se
 
     //Check key
     if (lastKeyQueried != key1) {
-        lastKeyFound = tree->get(key1, &currentValue);
+        lastKeyFound = this->learnedIndex->get(key1, this->currentValue);
         lastKeyQueried = key1;
     }
     if (!currentValue.exists(idx)) {
@@ -400,7 +401,7 @@ uint64_t Querier::estCardOnIndex(const int idx, const int64_t first, const int64
         return card;
     } else {
         if (lastKeyQueried != key1) {
-            lastKeyFound = tree->get(key1, &currentValue);
+            lastKeyFound = this->learnedIndex->get(key1, this->currentValue);
             lastKeyQueried = key1;
         }
         int perm = idx;
@@ -451,7 +452,7 @@ int64_t Querier::estCard(const int64_t s, const int64_t p, const int64_t o) {
             // perm = IDX_OPS;
         }
         if (lastKeyQueried != key) {
-            lastKeyFound = tree->get(key, &currentValue);
+            lastKeyFound = this->learnedIndex->get(key, this->currentValue);
             lastKeyQueried = key;
         }
 
@@ -504,7 +505,7 @@ int64_t Querier::getCard_internal(Querier *q, const int64_t s, const int64_t p, 
         else
             key = o;
         if (q->lastKeyQueried != key) {
-            q->lastKeyFound = q->tree->get(key, &q->currentValue);
+            q->lastKeyFound = q->learnedIndex->get(key, q->currentValue);
             q->lastKeyQueried = key;
         }
         int64_t nElements = 0;
@@ -905,7 +906,7 @@ TermItr *Querier::getKBTermList(const int perm, const bool enforcePerm) {
     }
     if (storage != NULL) {
         TermItr *itr = factory7.get();
-        itr->init(storage, nTablesPerPartition[perm], perm, tree);
+        itr->init(storage, nTablesPerPartition[perm], perm, this->learnedIndex);
         return itr;
     }
 
@@ -1064,7 +1065,7 @@ PairItr *Querier::getIterator(const int idx, const int64_t s, const int64_t p, c
 
     if (first >= 0) {
         if (lastKeyQueried != first) {
-            lastKeyFound = tree->get(first, &currentValue);
+            lastKeyFound = this->learnedIndex->get(first, this->currentValue);
             lastKeyQueried = first;
         }
         if (lastKeyFound) {

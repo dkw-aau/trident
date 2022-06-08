@@ -172,6 +172,7 @@ file(GLOB trident_SRC
     "src/trident/tests/*.cpp"
     "src/trident/tree/*.cpp"
     "src/trident/utils/*.cpp"
+    "src/trident/learned_index/*.cpp"
     )
 add_library(trident-core SHARED ${trident_SRC})
 set_target_properties(trident-core PROPERTIES COMPILE_FLAGS "${COMPILE_FLAGS}")

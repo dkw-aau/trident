@@ -31,6 +31,7 @@
 #include <trident/tree/flatroot.h>
 #include <trident/tree/stringbuffer.h>
 #include <trident/binarytables/tableshandler.h>
+#include <trident/learned_index/learnedindex.h>
 
 #include <string>
 #include <iostream>
@@ -40,6 +41,8 @@
 #include <chrono>
 
 using namespace std;
+
+class LearnedIndex;
 
 LIBEXP bool _sort_by_number(const string &s1, const string &s2);
 
@@ -443,7 +446,7 @@ void KB::loadDict(KBConfig *config) {
 }
 
 Querier *KB::query() {
-    return new Querier(tree, dictManager, files, totalNumberTriples,
+    return new Querier(new LearnedIndex(*(this->tree), this->readOnly), dictManager, files, totalNumberTriples,
             totalNumberTerms, nindices, ntables, nFirstTables,
             sampleKB, diffIndices, present, partial);
 }
@@ -785,7 +788,7 @@ void KB::mergeUpdates() {
     // Create querier with empty diffs
     std::vector<std::unique_ptr<DiffIndex>> diffs;
 
-    Querier *q1 = new Querier(tree, dictManager, files, totalNumberTriples,
+    Querier *q1 = new Querier(new LearnedIndex(*(this->tree), this->readOnly), dictManager, files, totalNumberTriples,
         totalNumberTerms, nindices, ntables, nFirstTables,
         sampleKB, diffs, present, partial);
 
