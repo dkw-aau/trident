@@ -2,7 +2,8 @@ testSnap
 scripts
 .ycm*
 .DS_Store
-/build*
+/*build*
+!build*.sh
 .vs/
 *.exe
 *.dll
@@ -19,4 +20,4 @@ scripts
 *.a
 *.o
 .idea/
-cmake-build-debug/
+release/

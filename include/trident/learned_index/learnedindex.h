@@ -12,16 +12,16 @@
 #include <istream>
 #include <ostream>
 
-class LearnedIndex//: public Index
+class LearnedIndex: public Index
 {
 public:
     LearnedIndex(Root& root, bool readOnly = false);
     LearnedIndex(const LearnedIndex& other) = default;
     LearnedIndex(LearnedIndex&& other) = default;
-    void put(const nTerm& key, TermCoordinates& value);// override;
-    void put(nTerm&& key, TermCoordinates& value);// override;
-    bool get(const nTerm& key, TermCoordinates& value);// override;
-    bool get(nTerm&& key, TermCoordinates& value);// override;
+    void put(const nTerm& key, TermCoordinates& value) override;
+    void put(nTerm&& key, TermCoordinates& value) override;
+    bool get(const nTerm& key, TermCoordinates& value) override;
+    bool get(nTerm&& key, TermCoordinates& value) override;
 
     // Operator equivalents of get()
     // Return cleared TermCoordinates
