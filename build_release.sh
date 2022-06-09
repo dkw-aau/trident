@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [! -d release ]
+if [ ! -d release ]
 then
     mkdir release
 fi

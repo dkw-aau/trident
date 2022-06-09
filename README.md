@@ -16,14 +16,14 @@ The installation should be fairly easy on Ubuntu (or on similar Linux distro
 that provide packages of commonly-used libraries). Make sure you have
 the following packages installed (with apt-get or similar):
 
-git
-libboost-all-dev
-liblz4-dev
-libtbb-dev
-libsparsehash-dev
-python3-dev
-libcurl-dev
-cmake
+- git
+- libboost-all-dev
+- liblz4-dev
+- libtbb-dev
+- libsparsehash-dev
+- python3-dev
+- libcurl-dev
+- cmake
 
 Then, clone Trident (if you have not already done so):
 
@@ -39,7 +39,7 @@ mode, etc.). So:
 cd trident
 mkdir build
 cd build
-cmake ..
+cmake -DSPARQL=1 -DSERVER=1 ..
 ```
 
 This will create some configuration files. Then, a simple
@@ -54,17 +54,11 @@ path to the environmental variable PYTHONPATH if you want to use Trident with
 Python), 3) an executable called "trident_exec". 
 
 
-## Installation on MacOS
+## Installation on MacOS or Windows
 
-The process is very similar to Ubuntu. You can install the libraries that
+On Windows, the process is exactly the same as on Ubuntu.
+On MacOS, the process is very similar to Ubuntu. You can install the libraries that
 are mentioned with Homebrew.
-
-## Installation on Windows
-
-I'm very sorry but I do not have a Windows machine, so I've never compiled
-Trident with this OS. I hope that the information that I gave about the
-compilation with other environments will be helpful to install Trident under
-this system.
 
 ## More advanced info on compilation
 
@@ -98,6 +92,8 @@ parameter to cmake:
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 ```
 
+Exchange `Debug` with `Release` to build the release version of Trident.
+
 Trident requires that the Boost libraries are compiled with multi-threading
 support and should be available in accessable locations. Trident also requires
 Intel's Thread Building Block libraries and libcurl. These three libraries will
@@ -109,7 +105,7 @@ but if these other libraries are not available then CMake will (or should)
 automatically download and compile them.
 
 Trident heavily relies on KOGNAC (an advanced compression library) to encode
-the knowledge graph and for various other routines. KOGNAC is available at <a
+the knowledge graph and for various other routines. KOGNAC is available at <a 
 href="https://github.com/jrbn/kognac">here</a>. The default behaviour of
 Trident is to download and compile KOGNAC during the building process. If, for
 any reason, you want to use an pre-existing version of KOGNAC, you can point
