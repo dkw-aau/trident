@@ -7,7 +7,6 @@
 #include <memory>
 
 LearnedIndex::LearnedIndex(Root& root, bool readOnly)
-    : readOnly(readOnly)
 {
     std::unique_ptr<TreeItr> itr(root.itr());
 
@@ -17,6 +16,8 @@ LearnedIndex::LearnedIndex(Root& root, bool readOnly)
         nTerm key = itr->next(&coord);
         put(std::move(key), coord);
     }
+
+    this->readOnly = readOnly;
 }
 
 void LearnedIndex::put(const nTerm& key, TermCoordinates& value)
