@@ -82,7 +82,7 @@ cd build
 and create all the setup files to compile the program
 
 ```
-cmake ..
+cmake -SPARQL=1 -DSERVER=1 ..
 ```
 
 If you want to create a debug version of the program, add the following
