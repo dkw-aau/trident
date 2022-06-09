@@ -2,8 +2,8 @@ testSnap
 scripts
 .ycm*
 .DS_Store
-/build*
-/trident*
+/*build*
+!build*.sh
 .vs/
 *.exe
 *.dll
@@ -19,3 +19,5 @@ scripts
 *.iobj
 *.a
 *.o
+.idea/
+release/
