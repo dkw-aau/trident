@@ -6,11 +6,10 @@
 #include <trident/tree/root.h>
 #include <trident/utils/propertymap.h>
 
-#include <alex/alex.h>
-
 #include <string>
 #include <istream>
 #include <ostream>
+#include <unordered_map>
 
 class LearnedIndex: public Index
 {
@@ -29,11 +28,11 @@ public:
     TermCoordinates operator[](nTerm&& key);
 
     // Iterator
-    alex::Alex<nTerm, TermCoordinates>::Iterator begin();
-    alex::Alex<nTerm, TermCoordinates>::Iterator end();
+    std::unordered_map<nTerm, TermCoordinates>::iterator begin();
+    std::unordered_map<nTerm, TermCoordinates>::iterator end();
 
 private:
-    alex::Alex<nTerm, TermCoordinates> index;
+    std::unordered_map<nTerm, TermCoordinates> index;
     bool readOnly;
 };
 

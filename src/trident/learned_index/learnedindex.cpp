@@ -22,50 +22,32 @@ LearnedIndex::LearnedIndex(Root& root, bool readOnly)
 
 void LearnedIndex::put(const nTerm& key, TermCoordinates& value)
 {
-    if (this->readOnly)
-    {
-        LOG(ERRORL) << "Put is requested on read-only learned index";
-        throw 10;
-    }
-
-    this->index.insert(key, value);
+    this->index[key] = value;
 }
 
 void LearnedIndex::put(nTerm&& key, TermCoordinates& value)
 {
-    if (this->readOnly)
-    {
-        LOG(ERRORL) << "Put is requested on read-only learned index";
-        throw 10;
-    }
-
-    this->index.insert(std::move(key), value);
+    this->index[std::move(key)] = value;
 }
 
 bool LearnedIndex::get(const nTerm& key, TermCoordinates& value)
 {
-    auto it = this->index.find(key);
+    if (this->index.find(key) == this->index.end())
+        return false;
 
-    if (it != this->index.end())
-    {
-        value = (*it).second;
-        return true;
-    }
-
-    return false;
+    value = this->index[key];
+    return true;
 }
 
 bool LearnedIndex::get(nTerm&& key, TermCoordinates& value)
 {
-    auto it = this->index.find(std::move(key));
+    nTerm cKey = std::move(key);
 
-    if (it != this->index.end())
-    {
-        value = (*it).second;
-        return true;
-    }
+    if (this->index.find(cKey) == this->index.end())
+        return false;
 
-    return false;
+    value = this->index[cKey];
+    return true;
 }
 
 TermCoordinates LearnedIndex::operator[](const nTerm& key)
@@ -88,12 +70,12 @@ TermCoordinates LearnedIndex::operator[](nTerm&& key)
     return coordinates;
 }
 
-alex::Alex<nTerm, TermCoordinates>::Iterator LearnedIndex::begin()
+std::unordered_map<nTerm, TermCoordinates>::iterator LearnedIndex::begin()
 {
     return this->index.begin();
 }
 
-alex::Alex<nTerm, TermCoordinates>::Iterator  LearnedIndex::end()
+std::unordered_map<nTerm, TermCoordinates>::iterator  LearnedIndex::end()
 {
     return this->index.end();
 }
