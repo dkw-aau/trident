@@ -28,7 +28,8 @@
 #include <trident/tree/coordinates.h>
 #include <trident/kb/consts.h>
 
-class LearnedIndex;
+//class LearnedIndex;
+class Root;
 
 class TermItr: public PairItr {
 
@@ -36,7 +37,8 @@ class TermItr: public PairItr {
         TableStorage *tables;
         int perm;
         uint64_t size;
-        LearnedIndex* learnedIndex; //used to get the count
+        //LearnedIndex* learnedIndex; //used to get the count
+        Root* tree;
         size_t nfiles;
 
         size_t currentfile;
@@ -53,7 +55,7 @@ class TermItr: public PairItr {
         uint64_t m_key;
 
     public:
-        void init(TableStorage *tables, uint64_t size, int perm, LearnedIndex* learnedIndex);
+        void init(TableStorage *tables, uint64_t size, int perm, Root* tree);
 
         int getTypeItr() {
             return TERM_ITR;

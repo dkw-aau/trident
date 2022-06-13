@@ -446,7 +446,7 @@ void KB::loadDict(KBConfig *config) {
 }
 
 Querier *KB::query() {
-    return new Querier(new LearnedIndex(*(this->tree), this->readOnly), dictManager, files, totalNumberTriples,
+    return new Querier(this->tree, dictManager, files, totalNumberTriples,
             totalNumberTerms, nindices, ntables, nFirstTables,
             sampleKB, diffIndices, present, partial);
 }
@@ -788,7 +788,7 @@ void KB::mergeUpdates() {
     // Create querier with empty diffs
     std::vector<std::unique_ptr<DiffIndex>> diffs;
 
-    Querier *q1 = new Querier(new LearnedIndex(*(this->tree), this->readOnly), dictManager, files, totalNumberTriples,
+    Querier *q1 = new Querier(this->tree, dictManager, files, totalNumberTriples,
         totalNumberTerms, nindices, ntables, nFirstTables,
         sampleKB, diffs, present, partial);
 
