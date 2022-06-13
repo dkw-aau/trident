@@ -31,7 +31,6 @@
 #include <trident/tree/flatroot.h>
 #include <trident/tree/stringbuffer.h>
 #include <trident/binarytables/tableshandler.h>
-#include <trident/learned_index/learnedindex.h>
 
 #include <string>
 #include <iostream>
@@ -41,8 +40,6 @@
 #include <chrono>
 
 using namespace std;
-
-class LearnedIndex;
 
 LIBEXP bool _sort_by_number(const string &s1, const string &s2);
 
