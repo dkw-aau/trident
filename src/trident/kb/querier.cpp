@@ -118,7 +118,7 @@ void Querier::initDiffIndex(DiffIndex *diff) {
 
 char Querier::getStrategy(const int idx, const int64_t v) {
     if (lastKeyQueried != v) {
-        lastKeyFound = this->tree->get(v, &(this->currentValue));
+        lastKeyFound = this->learnedIndex->get(v, this->currentValue);
         lastKeyQueried = v;
     }
     return currentValue.getStrategy(idx);
@@ -282,7 +282,7 @@ uint64_t Querier::isAggregated(const int idx, const int64_t first, const int64_t
     const int64_t key = second;
     if (key >= 0) {
         if (lastKeyQueried != key) {
-            lastKeyFound = this->tree->get(key, &this->currentValue);
+            lastKeyFound = this->learnedIndex->get(key, this->currentValue);
             lastKeyQueried = key;
         }
         if (currentValue.exists(idx)) {
@@ -337,7 +337,7 @@ uint64_t Querier::isReverse(const int idx, const int64_t first, const int64_t se
 
     //Check key
     if (lastKeyQueried != key1) {
-        lastKeyFound = this->tree->get(key1, &this->currentValue);
+        lastKeyFound = this->learnedIndex->get(key1, this->currentValue);
         lastKeyQueried = key1;
     }
     if (!currentValue.exists(idx)) {
@@ -401,7 +401,7 @@ uint64_t Querier::estCardOnIndex(const int idx, const int64_t first, const int64
         return card;
     } else {
         if (lastKeyQueried != key1) {
-            lastKeyFound = this->tree->get(key1, &this->currentValue);
+            lastKeyFound = this->learnedIndex->get(key1, this->currentValue);
             lastKeyQueried = key1;
         }
         int perm = idx;
@@ -452,7 +452,7 @@ int64_t Querier::estCard(const int64_t s, const int64_t p, const int64_t o) {
             // perm = IDX_OPS;
         }
         if (lastKeyQueried != key) {
-            lastKeyFound = this->tree->get(key, &this->currentValue);
+            lastKeyFound = this->learnedIndex->get(key, this->currentValue);
             lastKeyQueried = key;
         }
 
@@ -505,7 +505,7 @@ int64_t Querier::getCard_internal(Querier *q, const int64_t s, const int64_t p, 
         else
             key = o;
         if (q->lastKeyQueried != key) {
-            q->lastKeyFound = q->tree->get(key, &q->currentValue);
+            q->lastKeyFound = q->learnedIndex->get(key, q->currentValue);
             q->lastKeyQueried = key;
         }
         int64_t nElements = 0;
