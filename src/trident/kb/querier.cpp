@@ -19,7 +19,6 @@
  * under the License.
  **/
 
-
 #include <trident/kb/kb.h>
 #include <trident/kb/querier.h>
 #include <trident/tree/root.h>
@@ -79,8 +78,8 @@ Querier::Querier(Root* tree, DictMgmt *dict, TableStorage** files,
     nFirstTablesPerPartition(nFirstTablesPerPartition),
     // nindices(nindices),
     diffIndices(diffIndices), present(present), partial(partial) {
-        //this->learnedIndex = learnedIndex;
         this->tree = tree;
+        this->learnedIndex = new LearnedIndex(*this->tree, false);
         this->dict = dict;
         this->files = files;
         lastKeyFound = false;
@@ -1072,7 +1071,7 @@ PairItr *Querier::getIterator(const int idx, const int64_t s, const int64_t p, c
     if (first >= 0) {
         if (lastKeyQueried != first) {
             //lastKeyFound = this->learnedIndex->get(first, this->currentValue);
-            lastKeyFound = this->tree->get(first, &this->currentValue);
+            lastKeyFound = this->learnedIndex->get(first, this->currentValue);
             lastKeyQueried = first;
         }
         if (lastKeyFound) {

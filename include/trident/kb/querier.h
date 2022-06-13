@@ -54,6 +54,7 @@ class DictMgmt;
 class CacheIdx;
 class KB;
 class Partial;
+class LearnedIndex;
 
 class KeyCardItr {
     protected:
@@ -269,7 +270,7 @@ class TwoKeyCardItr: public KeyCardItr {
 
 class Querier {
     private:
-        //LearnedIndex* learnedIndex;
+        LearnedIndex* learnedIndex;
         Root* tree;
         DictMgmt *dict;
         TableStorage **files;

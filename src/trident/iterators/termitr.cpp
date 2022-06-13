@@ -23,7 +23,6 @@
 #include <trident/iterators/termitr.h>
 #include <trident/tree/treeitr.h>
 #include <trident/tree/coordinates.h>
-//#include <trident/learned_index/learnedindex.h>
 #include <trident/tree/root.h>
 
 void TermItr::init(TableStorage *tables, uint64_t size, int perm, Root* tree) {
