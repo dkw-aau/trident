@@ -8,8 +8,7 @@ RUN apt install git g++ cmake libboost-all-dev liblz4-dev libtbb-dev libsparseha
 COPY . /home
 WORKDIR /home
 
-RUN [ -d build ] && rm -rf build
-RUN mkdir build
+RUN mkdir -p build
 WORKDIR build/
 
 RUN cmake -DSPARQL=1 -DSERVER=1 ..
