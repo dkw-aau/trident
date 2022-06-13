@@ -7,6 +7,7 @@
 #include <memory>
 
 LearnedIndex::LearnedIndex(Root& root, bool readOnly)
+    : readOnly(false)
 {
     std::unique_ptr<TreeItr> itr(root.itr());
 
