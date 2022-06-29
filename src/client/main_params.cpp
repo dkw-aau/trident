@@ -33,6 +33,7 @@ void printHelp(const char *programName, string section,
         cout << "help\t\t\t produce help message." << endl;
         cout << "query\t\t\t query the KB using the RDF3X query optimizer and executor." << endl;
         cout << "query_native\t\t query the KB using the experimental engine." << endl;
+        cout << "benchmark\t\t run multiple queries." << endl;
         cout << "load\t\t\t load the KB." << endl;
         cout << "add\t\t\t add triples to an existing KB." << endl;
         cout << "rm\t\t\t rm triples to an existing KB." << endl;
@@ -83,6 +84,7 @@ bool checkParams(ProgramArgs &vm, int argc, const char** argv,
             && cmd != "add"
             && cmd != "rm"
             && cmd != "merge"
+            && cmd != "benchmark"
 #ifdef ANALYTICS
             && cmd != "analytics"
 #endif
