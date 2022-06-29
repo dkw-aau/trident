@@ -184,7 +184,7 @@ void callRDF3X(TridentLayer &db, const string &queryFileName, bool explain,
 void callRDF3XMultiple(TridentLayer &db, const string& folder, bool explain,
                                      bool disableBifocalSampling, bool resultsLookup) {
     vector<string> files;
-    string qFolder;
+    string qFolder = folder;
 
     if (folder == "") {
         cout << "SPARQL queries folder: " << endl;

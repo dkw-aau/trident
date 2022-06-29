@@ -6,6 +6,8 @@
 #include <functional>
 #include <memory>
 
+#include <iostream>
+
 LearnedIndex::LearnedIndex(Root& root, bool readOnly)
     : readOnly(false)
 {
@@ -58,6 +60,7 @@ bool LearnedIndex::get(const nTerm& key, TermCoordinates& value)
 
 bool LearnedIndex::get(nTerm&& key, TermCoordinates& value)
 {
+    std::cout << "LearnedIndex::get" << std::endl;
     auto it = this->index.find(std::move(key));
 
     if (it != this->index.end())
