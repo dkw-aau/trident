@@ -273,7 +273,7 @@ bool initParams(int argc, const char** argv, ProgramArgs &vm) {
 
     /***** BENCHMARK *****/
     ProgramArgs::GroupArgs& benchmark_options = *vm.newGroup("Options for <benchmark>");
-    benchmark_options.add<string>("f","folder", "",
+    benchmark_options.add<string>("p","path", "",
                               "The path of a folder of files with a SPARQL query. If not set then the path is read from STDIN.", false);
 
     /***** LOAD *****/

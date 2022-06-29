@@ -222,10 +222,10 @@ The option `benchmark` runs multiple queries at once and loads the indexes just 
 To use the command, run the following
 
 ```bash
-./trident benchmark -f <QUERY FOLDER> -i <DATA FOLDER>
+./trident benchmark -p <QUERY FOLDER PATH> -i <DATA FOLDER>
 ```
 
-The `-f` option sets the directory of the query files.
+The `-p` option sets the directory of the query files.
 The `-i` option is the same as for the other commands.
 
 ### Usage in Docker
