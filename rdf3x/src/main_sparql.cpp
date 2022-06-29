@@ -204,7 +204,8 @@ void callRDF3XMultiple(TridentLayer &db, const string& folder, bool explain,
     }
 
     while ((entry = readdir(dir)) != NULL) {
-        files.emplace_back(qFolder + entry->d_name);
+        if (string(entry->d_name) != "." && string(entry->d_name) != "..")
+            files.emplace_back(qFolder + entry->d_name);
     }
 
     closedir(dir);
