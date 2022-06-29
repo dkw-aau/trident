@@ -6,7 +6,7 @@ This is a modified version of the Trident triple store. This modification has th
 
 Build the Docker image
 
-```
+```bash
 docker build -t trident-clone .
 ```
 
@@ -27,7 +27,7 @@ the following packages installed (with apt-get or similar):
 
 Then, clone Trident (if you have not already done so):
 
-```
+```bash
 git clone git@github.com:karmaresearch/trident.git
 ```
 
@@ -35,7 +35,7 @@ This will create a `trident` directory. Next, create a build directory in the ma
 (e.g build), go to this directory and launch `cmake` (see below for some special parameters like DEBUG
 mode, etc.). So:
 
-```
+```bash
 cd trident
 mkdir build
 cd build
@@ -44,7 +44,7 @@ cmake -DSPARQL=1 -DSERVER=1 ..
 
 This will create some configuration files. Then, a simple
 
-```
+```bash
 make
 ```
 
@@ -69,26 +69,26 @@ program will create all sorts of files which will instruct "make" to build
 everything.  Suppose we create a directory "build" inside the main source tree
 with:
 
-```
+```bash
 mkdir build
 ```
 
 Then we move there
 
-```
+```bash
 cd build
 ```
 
 and create all the setup files to compile the program
 
-```
+```bash
 cmake -SPARQL=1 -DSERVER=1 ..
 ```
 
 If you want to create a debug version of the program, add the following
 parameter to cmake:
 
-```
+```bash
 cmake .. -DCMAKE_BUILD_TYPE=Debug
 ```
 
@@ -144,19 +144,19 @@ problem. To check SNAP has been correctly compiled, make sure that the file
 Tests are located in the `tests` folder in which a single `Makefile` wraps execution of all tests.
 To run a test, simply type
 
-```
+```bash
 make <TEST NAME>
 ```
 
 For example, to run tests for the learned index, type
 
-```
+```bash
 make testlearnedindex
 ```
 
 To run the learned index test in Docker, type
 
-```
+```bash
 docker run trident-clone cd ../tests && make testlearnedindex
 ```
 
@@ -170,7 +170,7 @@ For any of the commands, the option `-l` can be used to set logging level. For e
 
 To load Trident, use the _load_ command
 
-```
+```bash
 ./trident load -f <FOLDER WITH DATA> -i <DATA FOLDER>
 ```
 
@@ -181,18 +181,45 @@ The option `-i` must be followed by a non-existing folder in which trident data 
 
 To query Trident, use the _query_ command
 
-```
+```bash
 ./trident query -i <DATA FOLDER> -q <QUERY FILE>
 ```
 
 The `-i` option is the same as when using the `load` command.
 The option `-q` option must be followed by a query file.
 
+#### Server
+
+To run the Trident server, use the _server_ command
+
+```bash
+./trident server -i <DATA FOLDER>
+```
+
+The `-i` option is the same as when using the `load` command.
+
+To send a query to the Trident server, an HTTP POST request with the header parameter `'Content-Type': 'application/x-www-form-urlencoded'` is used. The data section in the request must contain a _print_ parameter to indicate whether to output the results (in JSON format) and the parameter _query_ to pass the actual query.
+You can use the following simple Python script to send a simple query to retrieve all types:
+
+```python
+import requests
+import json
+
+url = 'http://localhost:8080/sparql'
+query = 'SELECT DISTINCT ?t where { ?s a ?t }'
+headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+data = 'print=true&query=' + query
+r = requests.post(url, headers = headers, data = data)
+json_r = json.loads(r.text)
+
+print(str(json_r['results']['bindings']))
+```
+
 ### Usage in Docker
 
 Run any of the above commands with
 
-```
+```bash
 docker run trident-clone ./trident <COMMAND>
 ```
 
