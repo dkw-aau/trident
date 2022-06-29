@@ -279,8 +279,6 @@ bool initParams(int argc, const char** argv, ProgramArgs &vm) {
                             "Retrieve the original values of the results of query. Default is true", false);
     benchmark_options.add<bool>("e","explain", false,
                             "Explain the query instead of executing it. Default value is false.", false);
-    benchmark_options.add<bool>("", "decodeoutput", true,
-                            "Retrieve the original values of the results of query. Default is true", false);
     benchmark_options.add<bool>("", "enablePartials", false,
                             "Allow creation of partial indices (for instance when only one index is present). Default is false", false);
     benchmark_options.add<bool>("", "disbifsampl", false,
