@@ -61,6 +61,8 @@ extern bool checkMachineConstraints();
 extern void execNativeQuery(ProgramArgs &vm, Querier *q, KB &kb, bool silent);
 extern void callRDF3X(TridentLayer &db, const string &queryFileName, bool explain,
         bool disableBifocalSampling, bool resultslookup);
+extern void callRDF3XMultiple(TridentLayer &db, const string& folder, bool explain,
+                              bool disableBifocalSampling, bool resultsLookup);
 
 //Implemented in main_ml.cpp
 extern void launchML(KB &kb, string op, string algo, string paramsLearn,
@@ -374,6 +376,19 @@ int main(int argc, const char** argv) {
         cout.rdbuf(strm_buffer);
         printStats(kb, q);
         delete q;
+#else
+        LOG(ERRORL) << "Trident is not compiled with support to advanced SPARQL querying. Add -DSPARQL=1 to cmake";
+        return EXIT_FAILURE;
+#endif
+    } else if (cmd == "benchmark") {
+#ifdef SPARQL
+        KBConfig config;
+        std::vector<string> locUpdates;
+        KB kb(kbDir.c_str(), true, false, true, config, locUpdates, vm["enablePartials"].as<bool>());
+        TridentLayer layer(kb);
+        callRDF3XMultiple(layer, vm["folder"].as<string>(), vm["explain"].as<bool>(),
+                                    vm["disbifsampl"].as<bool>(), vm["decodeoutput"].as<bool>());
+        printStats(kb, layer.getQuerier());
 #else
         LOG(ERRORL) << "Trident is not compiled with support to advanced SPARQL querying. Add -DSPARQL=1 to cmake";
         return EXIT_FAILURE;

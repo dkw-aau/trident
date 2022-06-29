@@ -271,6 +271,21 @@ bool initParams(int argc, const char** argv, ProgramArgs &vm) {
     query_options.add<bool>("", "enablePartials", false,
             "Allow creation of partial indices (for instance when only one index is present). Default is false", false);
 
+    /***** BENCHMARK *****/
+    ProgramArgs::GroupArgs& benchmark_options = *vm.newGroup("Options for <benchmark>");
+    benchmark_options.add<string>("f","folder", "",
+                              "The path of a folder of files with a SPARQL query. If not set then the path is read from STDIN.", false);
+    benchmark_options.add<bool>("", "decodeoutput", true,
+                            "Retrieve the original values of the results of query. Default is true", false);
+    benchmark_options.add<bool>("e","explain", false,
+                            "Explain the query instead of executing it. Default value is false.", false);
+    benchmark_options.add<bool>("", "decodeoutput", true,
+                            "Retrieve the original values of the results of query. Default is true", false);
+    benchmark_options.add<bool>("", "enablePartials", false,
+                            "Allow creation of partial indices (for instance when only one index is present). Default is false", false);
+    benchmark_options.add<bool>("", "disbifsampl", false,
+                            "Disable bifocal sampling (accurate but expensive). Default is false", false);
+
     /***** LOAD *****/
     ParamsLoad p;
 
@@ -410,6 +425,7 @@ bool initParams(int argc, const char** argv, ProgramArgs &vm) {
 
     sections.insert(make_pair("general",&cmdline_options));
     sections.insert(make_pair("query",&query_options));
+    sections.insert(make_pair("benchmark", &benchmark_options));
     sections.insert(make_pair("lookup",&lookup_options));
     sections.insert(make_pair("load",&load_options));
     sections.insert(make_pair("test",&test_options));

@@ -19,6 +19,8 @@
 //END RDF3x dependencies
 
 #include <string>
+#include <vector>
+#include <dirent.h>
 
 using namespace std;
 
@@ -176,6 +178,39 @@ void callRDF3X(TridentLayer &db, const string &queryFileName, bool explain,
         uint64_t nElements = p->getPrintedRows();
         LOG(INFOL) << "# rows = " << nElements;
         delete operatorTree;
+    }
+}
+
+void callRDF3XMultiple(TridentLayer &db, const string& folder, bool explain,
+                                     bool disableBifocalSampling, bool resultsLookup) {
+    vector<string> files;
+    string qFolder;
+
+    if (folder == "") {
+        cout << "SPARQL queries folder: " << endl;
+        getline(cin, qFolder);
+        cout << "FOLDER " << qFolder << endl;
+    }
+
+    if (qFolder.back() != '/')
+        qFolder.append("/");
+
+    struct dirent* entry;
+    DIR* dir = opendir(qFolder.c_str());
+
+    if (dir == NULL) {
+        LOG(ERRORL) << "Erroneous directory given";
+        return;
+    }
+
+    while ((entry = readdir(dir)) != NULL) {
+        files.emplace_back(qFolder + entry->d_name);
+    }
+
+    closedir(dir);
+
+    for (const string& file : files) {
+        callRDF3X(db, file, explain, disableBifocalSampling, resultsLookup);
     }
 }
 
