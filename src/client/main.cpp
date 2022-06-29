@@ -386,7 +386,7 @@ int main(int argc, const char** argv) {
         std::vector<string> locUpdates;
         KB kb(kbDir.c_str(), true, false, true, config, locUpdates, vm["enablePartials"].as<bool>());
         TridentLayer layer(kb);
-        callRDF3XMultiple(layer, vm["folder"].as<string>(), vm["explain"].as<bool>(),
+        callRDF3XMultiple(layer, vm["path"].as<string>(), vm["explain"].as<bool>(),
                                     vm["disbifsampl"].as<bool>(), vm["decodeoutput"].as<bool>());
         printStats(kb, layer.getQuerier());
 #else
