@@ -4,10 +4,12 @@
 
 #include <utility>
 #include <memory>
+#include <chrono>
 
 LearnedIndex::LearnedIndex(Root& root, bool readOnly)
     : readOnly(false)
 {
+    auto start = std::chrono::steady_clock::now();
     std::unique_ptr<TreeItr> itr(root.itr());
 
     while (itr->hasNext())
@@ -17,6 +19,8 @@ LearnedIndex::LearnedIndex(Root& root, bool readOnly)
         put(std::move(key), coord);
     }
 
+    std::chrono::duration<double, std::milli> d = std::chrono::steady_clock::now() - start;
+    LOG(INFOL) << "Learned index loaded in " << d.count() << "ms";
     this->readOnly = readOnly;
 }
 
