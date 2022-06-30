@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 #include <dirent.h>
+#include <functional>
 
 using namespace std;
 
@@ -182,7 +183,7 @@ void callRDF3X(TridentLayer &db, const string &queryFileName, bool explain,
 }
 
 void callRDF3XMultiple(TridentLayer &db, const string& folder, bool explain,
-                                     bool disableBifocalSampling, bool resultsLookup) {
+                                     bool disableBifocalSampling, bool resultsLookup, std::function<void()> forEach) {
     vector<string> files;
     string qFolder = folder;
 
@@ -212,6 +213,7 @@ void callRDF3XMultiple(TridentLayer &db, const string& folder, bool explain,
 
     for (const string& file : files) {
         callRDF3X(db, file, explain, disableBifocalSampling, resultsLookup);
+        forEach();
     }
 }
 
