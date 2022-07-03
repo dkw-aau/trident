@@ -21,7 +21,6 @@
 
 #include <trident/kb/kb.h>
 #include <trident/kb/querier.h>
-#include <trident/tree/root.h>
 #include <trident/binarytables/tableshandler.h>
 #include <trident/iterators/emptyitr.h>
 #include <trident/iterators/compositetermitr.h>
@@ -68,7 +67,7 @@ ConstKeyCardItr::ConstKeyCardItr(Querier *q, uint64_t s, uint64_t r, uint64_t d,
 }
 
 
-Querier::Querier(Root* tree, DictMgmt *dict, TableStorage** files,
+Querier::Querier(LearnedIndex* learnedIndex, DictMgmt *dict, TableStorage** files,
         const int64_t inputSize, const int64_t nTerms, const int nindices,
         const int64_t *nTablesPerPartition,
         const int64_t *nFirstTablesPerPartition, KB *sampleKB,
@@ -78,8 +77,7 @@ Querier::Querier(Root* tree, DictMgmt *dict, TableStorage** files,
     nFirstTablesPerPartition(nFirstTablesPerPartition),
     // nindices(nindices),
     diffIndices(diffIndices), present(present), partial(partial) {
-        this->tree = tree;
-        this->learnedIndex = new LearnedIndex(*this->tree, false);
+        this->learnedIndex = learnedIndex;
         this->dict = dict;
         this->files = files;
         lastKeyFound = false;
@@ -123,14 +121,6 @@ char Querier::getStrategy(const int idx, const int64_t v) {
     }
     return currentValue.getStrategy(idx);
 }
-
-/*uint64_t Querier::getCard(const int idx, const int64_t v) {
-  if (lastKeyQueried != v) {
-  lastKeyFound = tree->get(v, &currentValue);
-  lastKeyQueried = v;
-  }
-  return currentValue.getNElements(idx);
-  }*/
 
 uint64_t Querier::getCardOnIndex(const int idx, const int64_t first, const int64_t second,
         const int64_t third, bool skipLast) {
@@ -906,7 +896,7 @@ TermItr *Querier::getKBTermList(const int perm, const bool enforcePerm) {
     }
     if (storage != NULL) {
         TermItr *itr = factory7.get();
-        itr->init(storage, nTablesPerPartition[perm], perm, this->tree);
+        itr->init(storage, nTablesPerPartition[perm], perm, this->learnedIndex);
         return itr;
     }
 

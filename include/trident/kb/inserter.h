@@ -25,7 +25,7 @@
 
 #include <trident/kb/dictmgmt.h>
 
-#include <trident/tree/root.h>
+#include <trident/learned_index/learnedindex.h>
 #include <trident/kb/consts.h>
 #include <trident/binarytables/storagestrat.h>
 #include <trident/binarytables/binarytableinserter.h>
@@ -38,20 +38,18 @@
 
 #define POSAGGRBYTE INT64_C(0x100000000000)
 
-class TreeInserter {
-
-    public:
-        virtual void addEntry(nTerm key, int64_t nElements, short file, int pos,
-                char stategy) = 0;
-
-        virtual ~TreeInserter() {}
+class LearnedIndexInserter
+{
+public:
+    virtual void addEntry(nTerm key, int64_t nElements, short file, int pos, char strategy) = 0;
+    virtual ~LearnedIndexInserter() {}
 };
 
 class Inserter {
     private:
         static char STRATEGY_FOR_POS;
 
-        Root* tree;
+        LearnedIndex* learnedIndex;
         TableStorage **files;
         const int64_t nTerms;
 
@@ -101,8 +99,8 @@ class Inserter {
         std::mutex mutex;
 
         int64_t getCoordinatesForPOS(const int p);
-        void writeCurrentEntryIntoTree(int permutation, TripleWriter *posArray,
-                TreeInserter *treeInserter,
+        void writeCurrentEntryIntoLearnedIndex(int permutation, TripleWriter *posArray,
+                LearnedIndexInserter *learnedIndexInserter,
                 const bool aggregated,
                 const bool canSkipTables);
 
@@ -113,7 +111,7 @@ class Inserter {
 
 
     public:
-        Inserter(Root *tree, TableStorage **files, int64_t nTerms,
+        Inserter(LearnedIndex *learnedIndex, TableStorage **files, int64_t nTerms,
                 bool useFixedStrategy, char fixedStrategy,
                 const size_t thresholdSkipTable,
                 int64_t *ntables, int64_t *nFirstElsNTables) : nTerms(nTerms),
@@ -123,7 +121,7 @@ class Inserter {
         thresholdSkipTable(thresholdSkipTable),
         ntables(ntables), nFirstElsNTables(nFirstElsNTables) {
             assert(thresholdSkipTable < THRESHOLD_KEEP_MEMORY);
-            this->tree = tree;
+            this->learnedIndex = learnedIndex;
             this->files = files;
 
             for (int i = 0; i < N_PARTITIONS; ++i) {
@@ -158,7 +156,7 @@ class Inserter {
 
         bool insert(const int permutation, const int64_t t1, const int64_t t2,
                 const int64_t t3, const int64_t count,
-                TripleWriter *posArray, TreeInserter *treeInserter,
+                TripleWriter *posArray, LearnedIndexInserter *learnedIndexInserter,
                 const bool aggregated, const bool canSkipTables);
 
         void insert(nTerm key, TermCoordinates *value);
@@ -166,7 +164,7 @@ class Inserter {
         std::string getPathPermutationStorage(const int perm);
 
         void flush(int permutation, TripleWriter *posArray,
-                TreeInserter *treeInserter,
+                   LearnedIndexInserter *learnedIndexInserter,
                 const bool aggregated,
                 const bool canSkipTables);
 

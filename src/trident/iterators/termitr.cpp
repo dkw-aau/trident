@@ -21,11 +21,10 @@
 
 
 #include <trident/iterators/termitr.h>
-#include <trident/tree/treeitr.h>
 #include <trident/tree/coordinates.h>
-#include <trident/tree/root.h>
+#include <trident/learned_index/learnedindex.h>
 
-void TermItr::init(TableStorage *tables, uint64_t size, int perm, Root* tree) {
+void TermItr::init(TableStorage *tables, uint64_t size, int perm, LearnedIndex* learnedIndex) {
     initializeConstraints();
     this->tables = tables;
     this->nfiles = tables->getLastCreatedFile() + 1;
@@ -35,7 +34,7 @@ void TermItr::init(TableStorage *tables, uint64_t size, int perm, Root* tree) {
     this->size = size;
     this->perm = perm;
     //this->learnedIndex = learnedIndex;
-    this->tree = tree;
+    this->learnedIndex = learnedIndex;
 
     this->buffer = tables->getBeginTableCoordinates(currentfile);
     this->endbuffer = tables->getEndTableCoordinates(currentfile);
@@ -163,9 +162,9 @@ void TermItr::gotoKey(int64_t keyToSearch) {
 int64_t TermItr::getCount() {
     if (cachedCount < 0) {
         TermCoordinates values;
-        bool resp = this->tree->get(key, &values);
+        bool resp = this->learnedIndex->get(key, values);
         if (!resp) {
-            LOG(ERRORL) << "Every key should be in the tree...";
+            LOG(ERRORL) << "Every key should be in the learned index...";
             throw 10;
         }
         if (perm > 2) {

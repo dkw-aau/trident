@@ -35,7 +35,7 @@ bool Inserter::insert(const int permutation,
         const int64_t t3,
         const int64_t count,
         TripleWriter *posArray,
-        TreeInserter *treeInserter,
+        LearnedIndexInserter* learnedIndexInserter,
         const bool aggregated,
         const bool canSkipTables) {
 
@@ -47,8 +47,8 @@ bool Inserter::insert(const int permutation,
         ntables[permutation]++;
         nFirstElsNTables[permutation]++;
         if (currentT1[permutation] != -1) {
-            writeCurrentEntryIntoTree(permutation, posArray,
-                    treeInserter, aggregated, canSkipTables);
+            writeCurrentEntryIntoLearnedIndex(permutation, posArray,
+                    learnedIndexInserter, aggregated, canSkipTables);
         }
         currentT1[permutation] = t1;
         currentT2[permutation] = t2;
@@ -127,11 +127,11 @@ int64_t Inserter::getCoordinatesForPOS(const int p) {
 }
 
 void Inserter::insert(nTerm key, TermCoordinates *value) {
-    tree->put(key, value);
+    this->learnedIndex->put(key, *value);
 }
 
-void Inserter::writeCurrentEntryIntoTree(int permutation,
-        TripleWriter *posArray, TreeInserter *treeInserter,
+void Inserter::writeCurrentEntryIntoLearnedIndex(int permutation,
+        TripleWriter *posArray, LearnedIndexInserter *learnedIndexInserter,
         const bool aggregated,
         const bool canSkipTables) {
 
@@ -185,7 +185,7 @@ void Inserter::writeCurrentEntryIntoTree(int permutation,
             nels = nElements[permutation];
         }
 
-        treeInserter->addEntry(currentT1[permutation], nels,
+        learnedIndexInserter->addEntry(currentT1[permutation], nels,
                 fileIdx[permutation],
                 startPositions[permutation],
                 strategies[permutation]);
@@ -268,13 +268,14 @@ void Inserter::storeInmemoryValuesIntoFiles(int permutation, int64_t* v1, int64_
 }
 
 void Inserter::flush(int permutation, TripleWriter * posArray,
-        TreeInserter * treeInserter, const bool aggregated,
+        LearnedIndexInserter* learnedIndexInserter, const bool aggregated,
         const bool canSkipTables) {
     if (currentT1[permutation] != -1) {
-        writeCurrentEntryIntoTree(permutation, posArray, treeInserter,
+        writeCurrentEntryIntoLearnedIndex(permutation, posArray, learnedIndexInserter,
                 aggregated, canSkipTables);
     }
     currentT1[permutation] = -1;
+    this->learnedIndex->persist();
 }
 
 void Inserter::stopInserts(int permutation) {

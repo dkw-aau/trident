@@ -271,7 +271,6 @@ class TwoKeyCardItr: public KeyCardItr {
 class Querier {
     private:
         LearnedIndex* learnedIndex;
-        Root* tree;
         DictMgmt *dict;
         TableStorage **files;
         int64_t lastKeyQueried;
@@ -383,7 +382,7 @@ class Querier {
             int64_t spo, ops, pos, sop, osp, pso;
         };
 
-        Querier(Root* tree, DictMgmt *dict, TableStorage** files,
+        Querier(LearnedIndex* learnedIndex, DictMgmt *dict, TableStorage** files,
                 const int64_t inputSize,
                 const int64_t nTerms, const int nindices,
                 const int64_t* nTablesPerPartition,

@@ -40,6 +40,7 @@ class Querier;
 class Inserter;
 class TableStorage;
 class Root;
+class LearnedIndex;
 class StringBuffer;
 struct FileSegment;
 class FileDescriptor;
@@ -55,7 +56,7 @@ class KB {
 
         const bool readOnly;
 
-        Root *tree;
+        LearnedIndex* learnedIndex;
         Stats stats;
 
         std::shared_ptr<DictMgmt::Dict> maindict;
@@ -194,9 +195,7 @@ class KB {
             return nextID;
         }
 
-        Root* getRootTree();
-
-        TreeItr *getItrTerms();
+        LearnedIndex* getLearnedIndex();
 
         std::vector<const char*> openAllFiles(int perm);
 

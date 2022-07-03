@@ -1019,7 +1019,7 @@ void Loader::insert(ParamInsert params) {
     int parallelProcesses = params.parallelProcesses;
     string inputDir = params.inputDir;
     string *POSoutputDir = params.POSoutputDir;
-    TreeWriter *treeWriter = params.treeWriter;
+    LearnedIndexWriter* learnedIndexWriter = params.learnedIndexWriter;
     Inserter *ins = params.ins;
     const bool aggregated = params.aggregated;
     const bool canSkipTables = params.canSkipTables;
@@ -1111,7 +1111,7 @@ void Loader::insert(ParamInsert params) {
                 if (o != po || p != pp || s != ps) {
                     count++;
                     ins->insert(permutation, s, p, o, countt, posWriter,
-                            treeWriter,
+                            learnedIndexWriter,
                             aggregated,
                             canSkipTables);
                     ps = s;
@@ -1167,7 +1167,7 @@ void Loader::insert(ParamInsert params) {
             if (t.o != po || t.p != pp || t.s != ps) {
                 count++;
                 ins->insert(permutation, t.s, t.p, t.o, t.count, posWriter,
-                        treeWriter,
+                        learnedIndexWriter,
                         aggregated,
                         canSkipTables);
                 ps = t.s;
@@ -1191,7 +1191,7 @@ void Loader::insert(ParamInsert params) {
         }
     }
 
-    ins->flush(permutation, posWriter, treeWriter, aggregated, canSkipTables);
+    ins->flush(permutation, posWriter, learnedIndexWriter, aggregated, canSkipTables);
 
     if (plainWriter != NULL) {
         delete plainWriter;
@@ -1700,7 +1700,7 @@ void Loader::loadKB_storeDicts(KB &kb,
         string dictMethod,
         string *fileNameDictionaries) {
     std::thread *threads;
-    LOG(DEBUGL) << "Insert the dictionary in the trees";
+    LOG(DEBUGL) << "Insert the dictionary in the learned indexes";
     threads = new std::thread[dictionaries - 1];
     nTerm *maxValues = new nTerm[dictionaries];
     if (dictMethod != DICT_SMART) {
@@ -1871,9 +1871,9 @@ void Loader::loadKB_createSamples(string kbDir,
     delete[] samplePermDirs;
 }
 
-void Loader::loadKB_createTree(KB &kb,
-        string *sTreeWriters,
-        TreeWriter **treeWriters,
+void Loader::loadKB_createLearnedIndex(KB &kb,
+        string *sLearnedIndexWriters,
+        LearnedIndexWriter **learnedIndexWriters,
         bool storeDicts,
         string graphTransformation,
         Inserter *ins,
@@ -1888,7 +1888,7 @@ void Loader::loadKB_createTree(KB &kb,
                     kb.getDictPath(0)));
     }
 
-    LOG(DEBUGL) << "Start creating the tree...";
+    LOG(DEBUGL) << "Start creating the learned index...";
     std::unique_ptr<SharedStructs> structs = std::unique_ptr<SharedStructs>(
             new SharedStructs());
     structs->bufferToFill = structs->bufferToReturn = &structs->buffer1;
@@ -1896,7 +1896,7 @@ void Loader::loadKB_createTree(KB &kb,
     structs->buffersReady = 0;
 
     ParamsMergeCoordinates params;
-    params.coordinates = sTreeWriters;
+    params.coordinates = sLearnedIndexWriters;
     params.ncoordinates = graphTransformation != "" ? 2 : 6;
 
     params.bufferToFill = structs->bufferToFill;
@@ -1914,13 +1914,13 @@ void Loader::loadKB_createTree(KB &kb,
         threads[1].join();
     }
     for (int i = 0; i < N_PARTITIONS; ++i) {
-        if (sTreeWriters[i] != "") {
-            Utils::remove(sTreeWriters[i]);
-            delete treeWriters[i];
+        if (sLearnedIndexWriters[i] != "") {
+            Utils::remove(sLearnedIndexWriters[i]);
+            delete learnedIndexWriters[i];
         }
     }
-    delete[] sTreeWriters;
-    delete[] treeWriters;
+    delete[] sLearnedIndexWriters;
+    delete[] learnedIndexWriters;
     delete[] threads;
 }
 
@@ -1968,15 +1968,15 @@ void Loader::loadKB(KB &kb,
     }
 
     LOG(DEBUGL) << "Insert the triples in the indices...";
-    string *sTreeWriters = new string[6];
-    TreeWriter **treeWriters = new TreeWriter*[6];
+    string *sLearnedIndexWriters = new string[6];
+    LearnedIndexWriter **learnedIndexWriters = new LearnedIndexWriter*[6];
     for (int i = 0; i < 6; ++i) {
         if ((signaturePerms & (1 << i)) || (aggrIndices && (i == 2 || (nindices == 6 && i == 5)))) {
-            sTreeWriters[i] = tmpDir + DIR_SEP + string("tmpTree" ) + to_string(i);
-            treeWriters[i] = new TreeWriter(sTreeWriters[i]);
+            sLearnedIndexWriters[i] = tmpDir + DIR_SEP + string("tmpLearnedIndex" ) + to_string(i);
+            learnedIndexWriters[i] = new LearnedIndexWriter(sLearnedIndexWriters[i]);
         } else {
-            sTreeWriters[i] = "";
-            treeWriters[i] = NULL;
+            sLearnedIndexWriters[i] = "";
+            learnedIndexWriters[i] = NULL;
         }
     }
 
@@ -2018,7 +2018,7 @@ void Loader::loadKB(KB &kb,
     createIndices(parallelProcesses, maxReadingThreads,
             ins, createIndicesInBlocks,
             aggrIndices,canSkipTables, storePlainList,
-            permDirs, outputDirs, aggr1Dir, aggr2Dir, treeWriters, sampleWriter,
+            permDirs, outputDirs, aggr1Dir, aggr2Dir, learnedIndexWriters, sampleWriter,
             sampleRate,
             remoteLocation,
             limitSpace,
@@ -2026,31 +2026,14 @@ void Loader::loadKB(KB &kb,
             nidx);
 
     for (int i = 0; i < N_PARTITIONS; ++i) {
-        if (treeWriters[i] != NULL) {
-            treeWriters[i]->finish();
+        if (learnedIndexWriters[i] != NULL) {
+            learnedIndexWriters[i]->finish();
         }
     }
 
-    loadKB_createTree(kb, sTreeWriters, treeWriters, storeDicts,
+    loadKB_createLearnedIndex(kb, sLearnedIndexWriters, learnedIndexWriters, storeDicts,
             graphTransformation, ins, nindices);
     delete ins;
-
-    if (flatTree || graphTransformation != "") {
-        LOG(DEBUGL) << "Load flat representation ...";
-        kb.close();
-        string flatfile = kbDir + DIR_SEP + "tree" + DIR_SEP + "flat";
-        //Create a tree itr to go through the tree
-        std::unique_ptr<Root> root(kb.getRootTree());
-        FlatRoot::loadFlatTree(kbDir + DIR_SEP + "p" + to_string(IDX_SOP),
-                kbDir + DIR_SEP + "p" +  to_string(IDX_OSP),
-                kbDir + DIR_SEP + "p" +  to_string(IDX_SPO),
-                kbDir + DIR_SEP + "p" +  to_string(IDX_OPS),
-                kbDir + DIR_SEP + "p" +  to_string(IDX_POS),
-                kbDir + DIR_SEP + "p" +  to_string(IDX_PSO),
-                flatfile, root.get(),
-                graphTransformation != "",
-                graphTransformation == "undirected");
-    }
 
     if (sample) {
         delete sampleWriter;
@@ -2176,258 +2159,6 @@ void Loader::moveData(string remoteLocation, string inputDir, int64_t limitSpace
     }
 }
 
-/*void Loader::parallel_createIndices(
-  int parallelProcesses,
-  int maxReadingThreads,
-  Inserter *ins,
-  const bool createIndicesInBlocks,
-  const bool aggrIndices,
-  const bool canSkipTables,
-  const bool storePlainList,
-  string *permDirs,
-  string *outputDirs,
-  string aggr1Dir,
-  string aggr2Dir,
-  TreeWriter **treeWriters,
-  SimpleTripleWriter *sampleWriter,
-  double sampleRate,
-  string remotePath,
-  int64_t limitSpace,
-  int64_t estimatedSize,
-  int nindices) {
-
-  if (aggrIndices && nindices != 6) {
-  LOG(ERRORL) << "Inconsistency on the input parameters. "
-  "AggrIndices=true but set less than 6 permutations...";
-  throw 10;
-  }
-
-//Sort chunks of the triple in main memory
-std::vector<std::pair<string, char>> outputdirs;
-if (nindices == 1) {
-PermSorter::sortChunks(permDirs[3],
-maxReadingThreads,
-parallelProcesses,
-estimatedSize,
-false,
-outputdirs);
-} else if (nindices == 2) {
-outputdirs.push_back(make_pair(permDirs[4], IDX_OSP));
-PermSorter::sortChunks(permDirs[3],
-maxReadingThreads,
-parallelProcesses,
-estimatedSize,
-false,
-outputdirs);
-} else {
-if (aggrIndices) {
-outputdirs.push_back(make_pair(permDirs[2], IDX_SOP));
-outputdirs.push_back(make_pair(permDirs[1], IDX_OPS));
-outputdirs.push_back(make_pair(permDirs[3], IDX_OSP));
-} else {
-outputdirs.push_back(make_pair(permDirs[3], IDX_SOP));
-outputdirs.push_back(make_pair(permDirs[1], IDX_OPS));
-outputdirs.push_back(make_pair(permDirs[4], IDX_OSP));
-outputdirs.push_back(make_pair(permDirs[2], IDX_POS));
-outputdirs.push_back(make_pair(permDirs[5], IDX_PSO));
-}
-PermSorter::sortChunks(permDirs[0],
-maxReadingThreads,
-parallelProcesses,
-estimatedSize,
-true,
-outputdirs);
-}
-
-//Merge the sorted segments on disk
-std::vector<std::thread> threads;
-ParamsMergeDiskFragments mp;
-if (!aggrIndices) {
-threads.resize(5);
-for(int i = 1; i < 6; ++i) {
-mp.inputDir = permDirs[i];
-threads[i-1] = std::thread(&Loader::mergeDiskFragments, mp);
-}
-} else {
-    threads.resize(3);
-    mp.inputDir = permDirs[1];
-    threads[0] = std::thread(&Loader::mergeDiskFragments, mp);
-    mp.inputDir = permDirs[3];
-    threads[1] = std::thread(&Loader::mergeDiskFragments, mp);
-    mp.inputDir = permDirs[4];
-    threads[2] = std::thread(&Loader::mergeDiskFragments, mp);
-}
-mp.inputDir = permDirs[0];
-mergeDiskFragments(mp);
-for(int i = 0; i < threads.size(); ++i) {
-    threads[i].join();
-}
-
-const int nperms = aggrIndices ? 4 : 6;
-std::thread ts[3];
-std::thread at1, at2;
-if (!aggrIndices) {
-    ParamInsert params;
-    params.parallelProcesses = parallelProcesses >= nperms ? parallelProcesses / nperms : 1;
-    params.ins = ins;
-    params.storeRaw = false;
-    params.sampleWriter = NULL;
-    params.sampleRate = 0.0;
-    params.aggregated = false;
-    params.removeInput = true;
-    params.printstats = printStats;
-    params.POSoutputDir = NULL;
-    params.deletePreviousExt = true;
-
-    params.permutation = 1;
-    params.inputDir = permDirs[1];
-    params.treeWriter = treeWriters[1];
-    params.canSkipTables = false;
-
-    ts[0] = std::thread(
-            std::bind(&Loader::insert, params));
-
-    params.permutation = 3;
-    params.inputDir = permDirs[3];
-    params.treeWriter = treeWriters[3];
-    params.canSkipTables = canSkipTables;
-
-    ts[1] = std::thread(
-            std::bind(&Loader::insert, params));
-
-    params.permutation = 4;
-    params.inputDir = permDirs[4];
-    params.treeWriter = treeWriters[4];
-    params.canSkipTables = canSkipTables;
-
-    ts[2] = std::thread(
-            std::bind(&Loader::insert, params));
-
-    //Start two more threads
-    params.permutation = 2;
-    params.inputDir = permDirs[2];
-    params.treeWriter = treeWriters[2];
-    params.canSkipTables = false;
-
-    at1 = std::thread(std::bind(&Loader::insert, params));
-
-    params.permutation = 5;
-    params.inputDir = permDirs[5];
-    params.treeWriter = treeWriters[5];
-    params.canSkipTables = canSkipTables;
-
-    at2 = std::thread(std::bind(&Loader::insert, params));
-
-} else {
-    ParamInsert params;
-    params.parallelProcesses = parallelProcesses >= nperms ? parallelProcesses / nperms : 1;
-    params.ins = ins;
-    params.storeRaw = false;
-    params.sampleWriter = NULL;
-    params.sampleRate = 0.0;
-    params.aggregated = false;
-    params.removeInput = true;
-    params.printstats = printStats;
-    params.deletePreviousExt = true;
-
-    params.permutation = 1;
-    params.inputDir = permDirs[1];
-    params.treeWriter = treeWriters[1];
-    params.POSoutputDir = &aggr1Dir;
-    params.canSkipTables = false;
-
-    ts[0] = std::thread(
-            std::bind(&Loader::insert, params));
-
-    params.permutation = 3;
-    params.inputDir = permDirs[2];
-    params.treeWriter = treeWriters[3];
-    params.POSoutputDir = NULL;
-    params.canSkipTables = canSkipTables;
-
-    ts[1] = std::thread(
-            std::bind(&Loader::insert, params));
-
-    params.permutation = 4;
-    params.inputDir = permDirs[3];
-    params.treeWriter = treeWriters[4];
-    params.POSoutputDir = NULL;
-    params.canSkipTables = canSkipTables;
-
-    ts[2] = std::thread(
-            std::bind(&Loader::insert, params));
-}
-
-ParamInsert params;
-params.parallelProcesses = parallelProcesses >= nperms ? parallelProcesses / nperms : 1;
-params.permutation = 0;
-params.inputDir = permDirs[0];
-params.POSoutputDir = aggrIndices ? &aggr2Dir : NULL;
-params.treeWriter = treeWriters[0];
-params.ins = ins;
-params.aggregated = false;
-params.canSkipTables = false;
-params.storeRaw = storePlainList;
-params.sampleWriter = sampleWriter;
-params.sampleRate = sampleRate;
-params.printstats = printStats;
-params.removeInput = true;
-params.deletePreviousExt = true;
-
-insert(params);
-for (int i = 0; i < 3; ++i) {
-    ts[i].join();
-}
-
-if (!aggrIndices) {
-    at1.join();
-    at2.join();
-}
-
-//Second phase: Aggregated
-if (aggrIndices) {
-    //TODO: sort
-    throw 10;
-
-    ParamsMergeDiskFragments mp;
-    mp.inputDir = permDirs[2];
-    std::thread th = std::thread(&Loader::mergeDiskFragments, mp);
-    mp.inputDir = permDirs[5];
-    mergeDiskFragments(mp);
-    th.join();
-
-    ParamInsert params;
-    params.parallelProcesses = parallelProcesses >= 2 ? parallelProcesses / 2 : 1;
-    params.ins = ins;
-    params.storeRaw = false;
-    params.sampleWriter = NULL;
-    params.sampleRate = 0.0;
-    params.removeInput = true;
-    params.aggregated = true;
-    params.printstats = printStats;
-    params.deletePreviousExt = true;
-
-    params.permutation = 2;
-    params.inputDir = aggr1Dir;
-    params.treeWriter = treeWriters[2];
-    params.POSoutputDir = NULL;
-    params.canSkipTables = false;
-
-    std::thread t[2];
-    t[0] = std::thread(std::bind(&Loader::insert, params));
-
-    params.permutation = 5;
-    params.inputDir = aggr2Dir;
-    params.treeWriter = treeWriters[5];
-    params.POSoutputDir = NULL;
-    params.canSkipTables = canSkipTables;
-
-    t[1] = std::thread(std::bind(&Loader::insert, params));
-    t[0].join();
-    t[1].join();
-}
-}
-
 void Loader::createIndices(
         int parallelProcesses,
         int maxReadingThreads,
@@ -2440,42 +2171,7 @@ void Loader::createIndices(
         string *outputDirs,
         string aggr1Dir,
         string aggr2Dir,
-        TreeWriter **treeWriters,
-        SimpleTripleWriter *sampleWriter,
-        double sampleRate,
-        string remotePath,
-        int64_t limitSpace,
-        int64_t estimatedSize,
-        int nindices) {
-    if (createIndicesInBlocks) {
-        seq_createIndices(parallelProcesses, maxReadingThreads,
-                ins, createIndicesInBlocks, aggrIndices, canSkipTables,
-                storePlainList, permDirs, outputDirs, aggr1Dir, aggr2Dir,
-                treeWriters, sampleWriter, sampleRate, remotePath,
-                limitSpace, estimatedSize);
-    } else {
-        parallel_createIndices(parallelProcesses, maxReadingThreads,
-                ins, createIndicesInBlocks, aggrIndices, canSkipTables,
-                storePlainList, permDirs, outputDirs, aggr1Dir, aggr2Dir,
-                treeWriters, sampleWriter, sampleRate, remotePath,
-                limitSpace, estimatedSize, nindices);
-    }
-}*/
-
-
-void Loader::createIndices(
-        int parallelProcesses,
-        int maxReadingThreads,
-        Inserter *ins,
-        const bool createIndicesInBlocks,
-        const bool aggrIndices,
-        const bool canSkipTables,
-        const bool storePlainList,
-        string *permDirs,
-        string *outputDirs,
-        string aggr1Dir,
-        string aggr2Dir,
-        TreeWriter **treeWriters,
+        LearnedIndexWriter **learnedIndexWriters,
         SimpleTripleWriter *sampleWriter,
         double sampleRate,
         string remotePath,
@@ -2519,7 +2215,7 @@ void Loader::createIndices(
     params.permutation = IDX_SPO;
     params.inputDir = permDirs[IDX_SPO];
     params.POSoutputDir = (aggrIndices && nindices == 6) ? &aggr2Dir : NULL;
-    params.treeWriter = treeWriters[IDX_SPO];
+    params.learnedIndexWriter = learnedIndexWriters[IDX_SPO];
     params.ins = ins;
     params.aggregated = false;
     params.canSkipTables = false;
@@ -2551,7 +2247,7 @@ void Loader::createIndices(
         params.permutation = IDX_OPS;
         params.inputDir = permDirs[IDX_OPS];
         params.POSoutputDir = aggrIndices ? &aggr1Dir : NULL;
-        params.treeWriter = treeWriters[IDX_OPS];
+        params.learnedIndexWriter = learnedIndexWriters[IDX_OPS];
         params.ins = ins;
         params.aggregated = false;
         params.canSkipTables = false;
@@ -2590,7 +2286,7 @@ void Loader::createIndices(
         params.permutation = IDX_SOP;
         params.inputDir = permDirs[IDX_SOP];
         params.POSoutputDir = (string*) NULL;
-        params.treeWriter = treeWriters[IDX_SOP];
+        params.learnedIndexWriter = learnedIndexWriters[IDX_SOP];
         params.ins = ins;
         params.aggregated = false;
         params.canSkipTables = canSkipTables;
@@ -2628,7 +2324,7 @@ void Loader::createIndices(
         params.permutation = IDX_OSP;
         params.inputDir = permDirs[IDX_OSP];
         params.POSoutputDir = (string*) NULL;
-        params.treeWriter = treeWriters[IDX_OSP];
+        params.learnedIndexWriter = learnedIndexWriters[IDX_OSP];
         params.ins = ins;
         params.aggregated = false;
         params.canSkipTables = canSkipTables;
@@ -2670,7 +2366,7 @@ void Loader::createIndices(
             params.permutation = IDX_POS;
             params.inputDir = permDirs[IDX_POS];
             params.POSoutputDir = (string*) NULL;
-            params.treeWriter = treeWriters[IDX_POS];
+            params.learnedIndexWriter = learnedIndexWriters[IDX_POS];
             params.ins = ins;
             params.aggregated = aggrIndices;
             params.canSkipTables = false;
@@ -2694,7 +2390,7 @@ void Loader::createIndices(
             params.permutation = IDX_POS;
             params.inputDir = aggr1Dir;
             params.POSoutputDir = (string*) NULL;
-            params.treeWriter = treeWriters[IDX_POS];
+            params.learnedIndexWriter = learnedIndexWriters[IDX_POS];
             params.ins = ins;
             params.aggregated = true;
             params.canSkipTables = false;
@@ -2746,7 +2442,7 @@ void Loader::createIndices(
             params.permutation = IDX_PSO;
             params.inputDir = permDirs[IDX_PSO];
             params.POSoutputDir = (string*) NULL;
-            params.treeWriter = treeWriters[IDX_PSO];
+            params.learnedIndexWriter = learnedIndexWriters[IDX_PSO];
             params.ins = ins;
             params.aggregated = false;
             params.canSkipTables = canSkipTables;
@@ -2772,7 +2468,7 @@ void Loader::createIndices(
             params.permutation = IDX_PSO;
             params.inputDir = aggr2Dir;
             params.POSoutputDir = (string*) NULL;
-            params.treeWriter = treeWriters[IDX_PSO];
+            params.learnedIndexWriter = learnedIndexWriters[IDX_PSO];
             params.ins = ins;
             params.aggregated = true;
             params.canSkipTables = canSkipTables;
@@ -2980,11 +2676,11 @@ void Loader::releaseBunchTermCoordinates(BufferCoordinates *cord,
     lock.unlock();
 }
 
-void Loader::testLoadingTree(string tmpDir, Inserter *ins, int nindices) {
-    string *sTreeWriters = new string[nindices];
+void Loader::testLoadingLearnedIndex(string tmpDir, Inserter *ins, int nindices) {
+    string *sLearnedIndexWriters = new string[nindices];
     std::thread *threads = new std::thread[1];
     for (int i = 0; i < nindices; ++i) {
-        sTreeWriters[i] = tmpDir + DIR_SEP + string("tmpTree" ) + to_string(i);
+        sLearnedIndexWriters[i] = tmpDir + DIR_SEP + string("tmpLearnedIndex" ) + to_string(i);
     }
 
     SharedStructs structs;
@@ -2993,7 +2689,7 @@ void Loader::testLoadingTree(string tmpDir, Inserter *ins, int nindices) {
     structs.buffersReady = 0;
 
     ParamsMergeCoordinates params;
-    params.coordinates = sTreeWriters;
+    params.coordinates = sLearnedIndexWriters;
     params.ncoordinates = 6;
 
     params.bufferToFill = structs.bufferToFill;
@@ -3007,7 +2703,7 @@ void Loader::testLoadingTree(string tmpDir, Inserter *ins, int nindices) {
             std::bind(&Loader::mergeTermCoordinates, params));
     processTermCoordinates(ins, &structs);
     threads[0].join();
-    delete[] sTreeWriters;
+    delete[] sLearnedIndexWriters;
     delete[] threads;
 }
 

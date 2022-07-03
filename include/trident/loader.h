@@ -77,31 +77,32 @@ typedef struct TreeEl {
     char strat;
 } TreeEl;
 
-class TreeWriter: public TreeInserter {
-    private:
-        ofstream fos;
-        char supportBuffer[23];
-    public:
-        TreeWriter(string path) {
-            fos.open(path, ios_base::binary);
-        }
+class LearnedIndexWriter: public LearnedIndexInserter
+{
+private:
+    ofstream fos;
+    char supportBuffer[23];
 
-        void addEntry(nTerm key, int64_t nElements, short file, int pos,
-                char strategy) {
-            Utils::encode_long(supportBuffer, 0, key);
-            Utils::encode_long(supportBuffer, 8, nElements);
-            Utils::encode_short(supportBuffer, 16, file);
-            Utils::encode_int(supportBuffer, 18, pos);
-            supportBuffer[22] = strategy;
-            fos.write(supportBuffer, 23);
-        }
+public:
+    LearnedIndexWriter(string path)
+    {
+        fos.open(path, ios_base::binary);
+    }
 
-        void finish() {
-            fos.close();
-        }
+    void addEntry(nTerm key, int64_t nElements, short file, int pos, char strategy)
+    {
+        Utils::encode_long(supportBuffer, 0, key);
+        Utils::encode_long(supportBuffer, 8, nElements);
+        Utils::encode_long(supportBuffer, 16, file);
+        Utils::encode_long(supportBuffer, 18, pos);
+        this->supportBuffer[22] = strategy;
+        fos.write(supportBuffer, 23);
+    }
 
-        ~TreeWriter() {
-        }
+    void finish()
+    {
+        fos.close();
+    }
 };
 
 class CoordinatesMerger {
@@ -212,7 +213,7 @@ struct ParamInsert {
     int parallelProcesses;
     string inputDir;
     string *POSoutputDir;
-    TreeWriter *treeWriter;
+    LearnedIndexWriter* learnedIndexWriter;
     Inserter *ins;
     bool aggregated;
     bool canSkipTables;
@@ -607,7 +608,7 @@ class Loader {
                 string *outputDirs,
                 string aggr1Dir,
                 string aggr2Dir,
-                TreeWriter **treeWriters,
+                LearnedIndexWriter** learnedIndexWriters,
                 SimpleTripleWriter *sampleWriter,
                 double sampleRate,
                 string remoteLocation,
@@ -640,9 +641,9 @@ class Loader {
                 string kbDir,
                 bool storeDicts);
 
-        void loadKB_createTree(KB &kb,
+        void loadKB_createLearnedIndex(KB &kb,
                 string *sTreeWriters,
-                TreeWriter **treeWriters,
+                LearnedIndexWriter **learnedIndexWriters,
                 bool storeDicts,
                 string graphTransformation,
                 Inserter *ins,
@@ -711,7 +712,7 @@ class Loader {
 
         LIBEXP void load(ParamsLoad p);
 
-        void testLoadingTree(string inputdir, Inserter *ins, int nindices);
+        void testLoadingLearnedIndex(string inputdir, Inserter *ins, int nindices);
 };
 
 #endif /* LOADER_H_ */

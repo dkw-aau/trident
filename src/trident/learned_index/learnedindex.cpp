@@ -5,9 +5,26 @@
 #include <utility>
 #include <memory>
 #include <chrono>
+#include <fstream>
 
-LearnedIndex::LearnedIndex(Root& root, bool readOnly)
-    : readOnly(false)
+LearnedIndex::LearnedIndex(const std::string& file)
+    : readOnly(false), path(path)
+{
+    auto start = std::chrono::steady_clock::now();
+
+    if (Utils::exists(path))
+    {
+        load();
+        std::chrono::duration<double, std::milli> d = std::chrono::steady_clock::now() - start;
+        LOG(INFOL) << "Loaded learned index in " << d.count() << "ms";
+    }
+
+    else
+        LOG(INFOL) << "No prior loaded learned index";
+}
+
+LearnedIndex::LearnedIndex(const std::string& file, Root& root, bool readOnly)
+    : LearnedIndex(file)
 {
     auto start = std::chrono::steady_clock::now();
     std::unique_ptr<TreeItr> itr(root.itr());
@@ -20,8 +37,9 @@ LearnedIndex::LearnedIndex(Root& root, bool readOnly)
     }
 
     std::chrono::duration<double, std::milli> d = std::chrono::steady_clock::now() - start;
-    LOG(INFOL) << "Learned index loaded in " << d.count() << "ms";
+    LOG(INFOL) << "Learned index loaded in from B+ tree in " << d.count() << "ms";
     this->readOnly = readOnly;
+    persist();
 }
 
 void LearnedIndex::put(const nTerm& key, TermCoordinates& value)
@@ -97,7 +115,21 @@ alex::Alex<nTerm, TermCoordinates>::Iterator LearnedIndex::begin()
     return this->index.begin();
 }
 
-alex::Alex<nTerm, TermCoordinates>::Iterator  LearnedIndex::end()
+alex::Alex<nTerm, TermCoordinates>::Iterator LearnedIndex::end()
 {
     return this->index.end();
+}
+
+void LearnedIndex::persist() const
+{
+    std::ofstream stream(this->path.c_str(), std::ios::binary);
+    stream.write((char*) &this->index, sizeof(this->index));
+}
+
+void LearnedIndex::load()
+{
+    this->index.clear();
+
+    std::ifstream stream(this->path.c_str(), std::ios::binary);
+    stream.read((char*) &this->index, sizeof(this->index));
 }

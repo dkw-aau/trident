@@ -27,7 +27,7 @@
 #include <trident/kb/consts.h>
 #include <trident/kb/kbconfig.h>
 #include <trident/kb/partial.h>
-#include <trident/tree/root.h>
+#include <trident/learned_index/learnedindex.h>
 #include <trident/tree/flatroot.h>
 #include <trident/tree/stringbuffer.h>
 #include <trident/binarytables/tableshandler.h>
@@ -57,7 +57,7 @@ KB::KB(const char *path,
     path(path), readOnly(readOnly), ntables(), nFirstTables(), isClosed(false),
     dictEnabled(dictEnabled), config(config) {
 
-        if (readOnly && !Utils::exists(string(path) + DIR_SEP + "tree")) {
+        if (readOnly && !Utils::exists(string(path) + DIR_SEP + "learnedindex")) {
             LOG(ERRORL) << "The input path does not seem to be a valid KB";
             throw 10;
         }
@@ -161,11 +161,11 @@ KB::KB(const char *path,
             MemoryOptimizer::optimizeForReading(dictPartitions, config);
         }
 
-        //Initialize the tree
-        string fileTree = path + DIR_SEP + string("tree") + DIR_SEP;
-        string flatTree = fileTree + string("flat");
-        if (readOnly && Utils::exists(flatTree)) {
-            tree = new FlatRoot(flatTree, graphType != GraphType::DEFAULT, graphType == GraphType::UNDIRECTED);
+        //Initialize the learned index
+        string fileLearnedIndex = path + DIR_SEP + string("learnedindex");
+
+        if (readOnly && Utils::exists(fileLearnedIndex)) {
+            this->learnedIndex = new LearnedIndex(fileLearnedIndex);
         } else {
             PropertyMap map;
             map.setBool(TEXT_KEYS, false);
@@ -193,12 +193,12 @@ KB::KB(const char *path,
                     config.getParamInt(TREE_NODE_KEYS_FACTORY_SIZE));
             map.setInt(NODE_KEYS_PREALL_FACTORY_SIZE,
                     config.getParamInt(TREE_NODE_KEYS_PREALL_FACTORY_SIZE));
-            tree = new Root(fileTree, NULL, readOnly, map);
+            this->learnedIndex = new LearnedIndex(fileLearnedIndex);
         }
 
         std::chrono::duration<double> sec = std::chrono::system_clock::now()
             - start;
-        LOG(DEBUGL) << "Time init tree KB = " << sec.count() * 1000 << " ms and " << Utils::get_max_mem() << " MB occupied";
+        LOG(DEBUGL) << "Time init learned index KB = " << sec.count() * 1000 << " ms and " << Utils::get_max_mem() << " MB occupied";
 
         //Initialize the dictionaries
         if (dictEnabled) {
@@ -358,35 +358,9 @@ KB::KB(const char *path,
         LOG(DEBUGL) << "Time init KB = " << sec.count() * 1000 << " ms and " << Utils::get_max_mem() << " MB occupied";
     }
 
-Root *KB::getRootTree() {
-    string fileTree = path + DIR_SEP + string("tree") + DIR_SEP;
-    PropertyMap map;
-    map.setBool(TEXT_KEYS, false);
-    map.setBool(TEXT_VALUES, false);
-    map.setBool(COMPRESSED_NODES, false);
-    map.setInt(LEAF_SIZE_PREALL_FACTORY,
-            config.getParamInt(TREE_MAXPREALLLEAVESCACHE));
-    map.setInt(LEAF_SIZE_FACTORY, config.getParamInt(TREE_MAXLEAVESCACHE));
-    map.setInt(MAX_NODES_IN_CACHE, config.getParamInt(TREE_MAXNODESINCACHE));
-    map.setInt(NODE_MIN_BYTES, config.getParamInt(TREE_NODEMINBYTES));
-    map.setLong(CACHE_MAX_SIZE, config.getParamLong(TREE_MAXSIZECACHETREE));
-    map.setInt(FILE_MAX_SIZE, config.getParamInt(TREE_MAXFILESIZE));
-    map.setInt(MAX_N_OPENED_FILES, config.getParamInt(TREE_MAXNFILES));
-    map.setInt(MAX_EL_PER_NODE, config.getParamInt(TREE_MAXELEMENTSNODE));
-
-    map.setInt(LEAF_MAX_PREALL_INTERNAL_LINES,
-            config.getParamInt(TREE_MAXPREALLINTERNALLINES));
-    map.setInt(LEAF_MAX_INTERNAL_LINES,
-            config.getParamInt(TREE_MAXINTERNALLINES));
-    map.setInt(LEAF_ARRAYS_FACTORY_SIZE, config.getParamInt(TREE_FACTORYSIZE));
-    map.setInt(LEAF_ARRAYS_PREALL_FACTORY_SIZE,
-            config.getParamInt(TREE_ALLOCATEDELEMENTS));
-
-    map.setInt(NODE_KEYS_FACTORY_SIZE,
-            config.getParamInt(TREE_NODE_KEYS_FACTORY_SIZE));
-    map.setInt(NODE_KEYS_PREALL_FACTORY_SIZE,
-            config.getParamInt(TREE_NODE_KEYS_PREALL_FACTORY_SIZE));
-    return new Root(fileTree, NULL, true, map);
+LearnedIndex *KB::getLearnedIndex() {
+    string fileLearnedIndex = path + DIR_SEP + string("learnedIndex");
+    return new LearnedIndex(fileLearnedIndex);
 }
 
 void KB::loadDict(KBConfig *config) {
@@ -443,7 +417,7 @@ void KB::loadDict(KBConfig *config) {
 }
 
 Querier *KB::query() {
-    return new Querier(this->tree, dictManager, files, totalNumberTriples,
+    return new Querier(this->learnedIndex, dictManager, files, totalNumberTriples,
             totalNumberTerms, nindices, ntables, nFirstTables,
             sampleKB, diffIndices, present, partial);
 }
@@ -453,7 +427,7 @@ Inserter *KB::insert() {
         LOG(ERRORL) << "Insert() is not available if the knowledge base is opened in read_only mode.";
     }
 
-    return new Inserter(tree,
+    return new Inserter(this->learnedIndex,
             files,
             totalNumberTerms + (dictEnabled ? dictManager->getNTermsInserted() : 0),
             useFixedStrategy,
@@ -472,10 +446,6 @@ string KB::getDictPath(int i) {
     stringstream ss1;
     ss1 << path << DIR_SEP << "dict" << DIR_SEP << i;
     return ss1.str();
-}
-
-TreeItr *KB::getItrTerms() {
-    return tree->itr();
 }
 
 Stats KB::getStats() {
@@ -503,9 +473,9 @@ void KB::close() {
         }
     }
 
-    if (tree != NULL) {
-        delete tree;
-        tree = NULL;
+    if (this->learnedIndex != NULL) {
+        delete this->learnedIndex;
+        this->learnedIndex = NULL;
     }
     if (dictEnabled) {
         if (dictManager != NULL) {
@@ -785,7 +755,7 @@ void KB::mergeUpdates() {
     // Create querier with empty diffs
     std::vector<std::unique_ptr<DiffIndex>> diffs;
 
-    Querier *q1 = new Querier(this->tree, dictManager, files, totalNumberTriples,
+    Querier *q1 = new Querier(this->learnedIndex, dictManager, files, totalNumberTriples,
         totalNumberTerms, nindices, ntables, nFirstTables,
         sampleKB, diffs, present, partial);
 
